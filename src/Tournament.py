@@ -1,6 +1,5 @@
 import discord
 from discord.ext import commands
-import subprocess
 import time
 import random
 import re
@@ -185,7 +184,6 @@ async def reloadPresent(ctx: commands.Context, tour_now):
             # member.get_role will be usable after version 2.0 (the latest version in pip is 1.7.3)
             # async def obtainValidReactMembers(ctx, tour_now, process_now, react_members):
                 #role_now = tour_now["roles"][process_now]
-                #print({mem.name:mem.roles for mem in react_members}, role_now)
                 #react_members_withRole=[mem for mem in react_members if role_now in mem.roles]
                 #members_all = tour_now["members"][process_now]["all"]
             #    return react_members_withRole #list(set(members_all) & set(react_members))
@@ -395,7 +393,7 @@ class Basic(commands.Cog):
         while True:
             tour_now["process"] += 1
             process_now = tour_now["process"]
-            print(process_now)
+            print(f"Tournament {tour_id}: {process_now}")
 
             def obtainMembersAll(tour_now, process_now):
                 winners_last = tour_now["members"][process_now]["all"]
@@ -634,8 +632,12 @@ class Delete(commands.Cog):
         for role in [s for s in ctx.guild.roles if re.findall(r"#\w{5}$", s.name) != []]:
             await role.delete()
 
+    """@commands.command(description="", pass_context=True)
+    async def tmp(self, ctx: commands.Context):
+        print(self.bot.users)"""
+
 
 def setup(bot):
     bot.add_cog(Basic(bot))
     bot.add_cog(Delete(bot))
-    bot.add_cog(Tmp(bot))
+    #bot.add_cog(Tmp(bot))

@@ -1,13 +1,7 @@
 #! /usr/bin/env python3
 import discord
 from discord.ext import commands
-import subprocess
-import re
 import os
-import shutil
-import sys
-import asyncio
-import datetime
 import traceback
 import basic
 from Tournament import reloadPresent
@@ -15,7 +9,7 @@ from Tournament import reloadPresent
 TOKEN = basic.DISCORD_TOKENS["beta"]  # beta
 startup_extensions = ["Tournament"]  # cogの導入
 
-description = ("")
+description = ("`?open <1試合の人数> <最大参加人数>`でトーナメントを開催することができます。")
 #intents = discord.Intents(members=True)
 bot = commands.Bot(command_prefix='?', description=description) #, intents=intents, chunk_guilds_at_startup=False
 commands.Context.tours = {}
@@ -37,15 +31,12 @@ async def on_ready():
 @bot.event
 async def on_message(message):
     # メッセージ送信者がこのBotだった場合は無視する
-    if message.author.id in [basic.ids["account"][s] for s in ["alpha", "beta"]]:
+    if message.author.id == bot.user.id:
         return
     # 管理者に制限されている場合、権限なしなら反応しない
     ctx = await bot.get_context(message)
     if ctx.onlyAdmin is True and not ctx.author.guild_permissions.administrator:
         return
-
-    if message.content == '腹が鳴る':
-        await message.channel.send('腕が鳴るだろ……')
 
     # bot.commandにmessageを流す
     try:
@@ -61,7 +52,7 @@ async def react_reactions(payload):
     valid_msg_ids = {tour["valid_ids"]["message"]: tour for tour in ctx.tours.values()}
     if message_now.id in [k for k in valid_msg_ids.keys()]:
         tour_now = valid_msg_ids[message_now.id]
-        await reloadPresent(ctx, tour_now) #basic.
+        await reloadPresent(ctx, tour_now)
 
 ## reaction event
 @bot.event
