@@ -35,7 +35,7 @@ def obtainRoleArgs(key, tour_now):
     tour_id = tour_now["id"]
     if key == 0:
         return {
-            "name": f"参加候補者#{tour_id}",
+            "name": f"参加希望者#{tour_id}",
             "color": discord.Colour.blue(),
             "hoist": True}
     elif isinstance(key, int):
@@ -131,17 +131,17 @@ async def reloadPresent(ctx: commands.Context, tour_now):
             tour_now["members"][0] = {"all": react_members}
             members = tour_now["members"][0]["all"]
             if len(members) == 0:
-                content = f"process {process_now}: 参加候補者一覧"
+                content = f"process {process_now}: 参加希望者一覧"
                 return content
             cand_content =\
-                f"process {process_now}: 参加候補者一覧\n" +\
-                f"参加候補者は以下の{len(members)}名です (最大{tour_now['maxNumber']}名)\n" +\
+                f"process {process_now}: 参加希望者一覧\n" +\
+                f"参加希望者は以下の{len(members)}名です (最大{tour_now['maxNumber']}名)\n" +\
                 "-"*6 + "\n" +\
                 "\n".join(
                     [f"{mem.name}#{mem.discriminator}" for mem in members]) + "\n"
 
             group_nums = judgeGroup(len(members), tour_now["number"])
-            add_content = "候補者が最大人数を超過しているので、抽選が行われます。"\
+            add_content = "希望者が最大人数を超過しているので、抽選が行われます。"\
                 if len(members) > tour_now["maxNumber"] else \
                 ("" if len(members) == sum(group_nums)
                  else f"調整のため、抽選で参加人数を{sum(group_nums)}人に絞ります。")
@@ -340,7 +340,7 @@ class Basic(commands.Cog):
         tour_now["channel_ids"] = {chan.name: chan.id for chan in channels}
 
         ### process 0
-        present_content = "process 0: 参加候補者一覧"
+        present_content = "process 0: 参加希望者一覧"
         msg_present = await send2chan(ctx, present_content, tour_now["channel_ids"]["present"])
         tour_now["message_ids"] = {
             "present": msg_present.id,
