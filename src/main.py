@@ -41,6 +41,8 @@ async def on_message(message):
     # bot.commandにmessageを流す
     try:
         await bot.process_commands(message)
+    except (discord.ext.commands.errors.CommandNotFound, discord.ext.commands.errors.BadArgument) as e:
+        pass
     except Exception as e:
         print(traceback.format_exc())
         #print(e)
