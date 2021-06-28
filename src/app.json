@@ -1,0 +1,6 @@
+{
+    "name": "UmaTournamentBot",
+    "description": "ウマ娘用のトーナメント開催を支援するdiscord botです。",
+    "repository": "https://github.com/TomoTom0/UmaTournamentBot",
+    "keywords": ["python", "discord", "bot"]
+  }

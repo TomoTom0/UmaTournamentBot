@@ -90,7 +90,7 @@ def judgeOrder(process_now, num_members, number):
 
 def judgeGroup(num_members, numberIn):
     number = int(numberIn)
-    num_ind = int(math.log(num_members, number))
+    num_ind = int(math.log(num_members, number)) if num_members > 0 else 0
     if num_ind == 0:
         return [num_members]
     elif num_members < (number - 1) * number ** num_ind:
