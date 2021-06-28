@@ -364,7 +364,7 @@ class Basic(commands.Cog):
             if input_content == "!cancel":
                 cancelContent = f"Tournament {tour_id}は中止されました。"
                 await ctx.channel.send(cancelContent)
-                await cancelTour(ctx, tour_now)
+                await cancelTour(ctx, tour_id)
                 return
             if input_content.startswith("!adjust"):
                 numAdj = int(input_content.split()[1])
@@ -596,6 +596,9 @@ async def deleteResFunc(ctx: commands.Context):
                     if re.findall(r"#\w{5}$", s.name) != []
                     and all([not s.name.endswith(f"#{tour_id}") for tour_id, tour in ctx.tours.items() if "victor" not in tour.keys()])]:
         await role.delete()
+    for tour in ctx.tours.values():
+        if "victor" in tour.keys():
+            ctx.tours.pop(tour["id"])
 
 
 class Delete(commands.Cog):
@@ -631,6 +634,7 @@ class Delete(commands.Cog):
             await cat.delete()
         for role in [s for s in ctx.guild.roles if re.findall(r"#\w{5}$", s.name) != []]:
             await role.delete()
+        ctx.tours = {}
 
     """@commands.command(description="", pass_context=True)
     async def tmp(self, ctx: commands.Context):
