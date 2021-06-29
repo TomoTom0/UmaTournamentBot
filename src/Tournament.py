@@ -47,20 +47,16 @@ def obtainRoleArgs(key, tour_now):
         orderIn = judgeOrder(process_now, mem_number, number)
         order = "優勝" if orderIn == "表彰式" else orderIn
         color_dicts = {
-            "決勝": discord.Color.red(), "準決勝": discord.Color.orange()}
-        color = color_dicts[order] if order in color_dicts.keys(
-        ) else discord.Color.green()
+            "優勝":discord.Colour.gold(),
+            "決勝戦": discord.Color.red(),
+            "準決勝戦": discord.Color.orange()}
+        color_role = color_dicts.get(order, discord.Color.green())
+        name_role= f"TOP{mem_number} - {order}#{tour_id}" if order!="優勝" else f"TOP - 優勝#{tour_id}"
         return {
-            "name": f"TOP{mem_number} - {order}#{tour_id}",
-            "color": discord.Color.green(),
-            "hoist": True}
-    elif key == "victor":
-        #process_now = tour_now["process"]
-        #all_mem_num = len(tour_now["all_members"].keys())
-        return {
-            "name": f"TOP - 優勝#{tour_id}",
-            "color": discord.Colour.gold(),
-            "hoist": True}
+            "name": name_role,
+            "color": color_role,
+            "hoist": True
+        }
 
 
 async def add_role(ctx, member, role_id):
@@ -77,6 +73,8 @@ async def send2chan(ctx: commands.Context, msg_content: str, channel_id):
 
 async def editMsg(ctx: commands.Context, msg_content: str, message_id, channel_id):
     channel_tmp = ctx.guild.get_channel(channel_id)
+    if channel_tmp is None:
+        return
     message_tmp = await channel_tmp.fetch_message(message_id)
     await message_tmp.edit(content=msg_content)
     # return
@@ -173,7 +171,7 @@ async def showGroup(ctx, tour_now, process_now, category_tour=None, forEdit=Fals
     winners_all=sum(winners_grps.values(), [])
     head_content = "\n" + \
         "□■━━━━━━━━━━━━■□\n"+\
-        f"\t\t\t**{order} グループ分け**\n\t\t\t\t\t全{len(group_now)}グループ\n"+\
+        f"\t\t\t\t**{order} グループ分け**\n\t\t\t\t\t\t全{len(group_now)}グループ\n"+\
         "□■━━━━━━━━━━━━■□"
     # width: O = \s*3, \t = \s*4
     group_content = "\n".join([""]+[
@@ -225,12 +223,12 @@ async def reloadPresent(ctx: commands.Context, tour_now:dict, check_role=False):
             if len(members) == 0:
                 content = \
                     "□■━━━━━━━━━━━━■□\n"+\
-                    f"\t\t\t**参加希望者一覧**\n"+\
+                    f"\t\t\t\t**参加希望者一覧**\n"+\
                     "□■━━━━━━━━━━━━■□"
                 return content
             cand_content =\
                 "□■━━━━━━━━━━━━■□\n"+\
-                f"\t\t\t**参加希望者一覧**\n" +\
+                f"\t\t\t\t**参加希望者一覧**\n" +\
                 "□■━━━━━━━━━━━━■□\n"+"\n"+\
                 f"参加希望者は以下の**{len(members)}名です**(最大{tour_now['maxNumber']}名)。\n" +\
                 "\n\t\t" +\
@@ -284,7 +282,7 @@ async def reloadPresent(ctx: commands.Context, tour_now:dict, check_role=False):
 
             win_content_dict = {
                 "head": "□■━━━━━━━━━━━━■□\n"+\
-                    f"\t\t\t**{order} 勝者報告一覧**\n"+\
+                    f"\t\t\t\t**{order} 勝者報告一覧**\n"+\
                     "□■━━━━━━━━━━━━■□",
                 "main": "\n"+"\n".join([f"**`グループ{k+1}`**\n\t\t"+"\n\t\t".join([f"{mem.name}#{mem.discriminator}" for mem in v]) 
                     for k, v in winners_grps.items()]),
@@ -362,7 +360,10 @@ class Basic(commands.Cog):
             input_content = msg_input.content
             if input_content == "!yes":
                 for tour_id in tour_ids_old:
-                    await cancelTour(ctx, tour_id)
+                    try:
+                        await cancelTour(ctx, tour_id)
+                    except Exception as e:
+                        print(e)
                 content = "以下のトーナメントを終了しました。: "+", ".join(tour_ids_old)+"\n" +\
                     "操作を続行します。\n\n"
                 await ctx.channel.send(content)
@@ -433,18 +434,17 @@ class Basic(commands.Cog):
 
         # ## process 0
         present_content = "□■━━━━━━━━━━━━■□\n"+\
-            "\t\t\t**参加希望者一覧**\n"+\
+            "\t\t\t\t**参加希望者一覧**\n"+\
             "□■━━━━━━━━━━━━■□"
         msg_present = await send2chan(ctx, present_content, tour_now["channel_ids"]["present"])
         tour_now["message_ids"] = {
-            "present": msg_present.id,
-            "open": msg_open.id}
+            "present": msg_present.id}
 
         # role
         # tour_now["roles"][0]=await ctx.guild.create_role(**obtainRoleArgs(0, tour_now))
 
         tour_now["valid_ids"] = {"channel": ctx.channel.id,
-                                 "message": tour_now["message_ids"]["open"]}
+                                 "message": msg_open.id}
 
         # ## check msg
         def check_msg(msg):
@@ -453,6 +453,12 @@ class Basic(commands.Cog):
                 "("+"|".join([s["re"] for s in commands_dict.values()])+")")
             isValidContent = re.findall(commands_re, msg.content) != []
             return isValidAuthor and isValidContent
+
+        # ## initial_roles
+        for num_tmp in range(2):
+            role_tmp = await ctx.guild.create_role(name=f"トーナメントBot{num_tmp}#{tour_id}", hoist=False)
+            tour_now["roles"][f"bot-{num_tmp}"]=role_tmp
+            await ctx.guild.me.add_roles(discord.Object(role_tmp.id))
 
         while True:
             msg_input = await ctx.bot.wait_for("message", check=check_msg, timeout=None)
@@ -466,9 +472,9 @@ class Basic(commands.Cog):
                 tour_now["forAll"] = not tour_now["forAll"]
                 content_dict = {
                     False: "最大参加人数以外のトーナメント調整は行われません。",
-                    True: "最大参加人数以外の抽選が行われます。"
+                    True: "最大参加人数以外にもトーナメント調整が行われます。"
                 }
-                content = content_dict(tour_now["forAll"])
+                content = content_dict[tour_now["forAll"]]
                 await ctx.channel.send(content)
                 await cancelTour(ctx, tour_id)
                 continue
@@ -507,10 +513,9 @@ class Basic(commands.Cog):
             members_now = {"all": obtainMembersAll(tour_now, process_now)}
             tour_now["all_members"].update(
                 {mem.id: mem for mem in members_now["all"]})
-            if len(members_now["all"]) == 1:
-                tour_now["victor"] = members_now["all"][0]
-                break  # finish
 
+
+            # ## renew role
             async def renewRole(ctx, tour_now, process_now):
                 old_role = tour_now["roles"].get(process_now)
                 role_tmp = await ctx.guild.create_role(**obtainRoleArgs(process_now, tour_now))
@@ -527,11 +532,18 @@ class Basic(commands.Cog):
                 for member in members_now["all"]:
                     if old_role is not None:
                         await member.remove_roles(role_sf_old)
-                    if process_now > 1:
-                        role_sf = discord.Object(
-                            tour_now["roles"][process_now-1].id)
-                        await member.remove_roles(role_sf)
+                if process_now > 1:
+                    #offset=ctx.guild.me.top_role.position - process_now - 1
+                    #offset=0
+                    positions={tour_now["roles"][pro_num]: pro_num for pro_num in range(1, process_now+1)}
+                    print({role.name:role.position for role in ctx.guild.roles}, positions)
+                    await ctx.guild.edit_role_positions(positions)
+                    await tour_now["roles"][process_now - 1].edit(color=discord.Color.from_hsv(226/360, 47/100, 85/100))
             await renewRole(ctx, tour_now, process_now) # await
+
+            if len(members_now["all"]) == 1:
+                tour_now["victor"] = members_now["all"][0]
+                break  # finish
 
             members_now["group"] = divideIntoGroup(
                 members_now["all"], number, maxNumber)
@@ -567,27 +579,27 @@ class Basic(commands.Cog):
                         "nextForce": {
                             "re": r"^!nextForce$",
                             "expl": f"`!nextForce`\n\t\t適切に選出されている勝者のみで、{order2}に進みます。"},
-                        "role":{
-                            "re":r"!role$",
-                            "expl":"`!role`\n\t\t役職の変更をトーナメントに反映します。"
-                        },
                         "expl":{
                             "re":r"^!expl$",
-                            "expl":"`!expl`\n\t\tユーザーの除名・追加などに関する他のコマンドの説明を表示します。"},
+                            "expl":"`!expl`\n\t\t主にユーザーの除名・追加に関する他のコマンドの説明を表示します。"},
                         "cancel": {
                             "re": r"^!cancel$",
                             "expl": "`!cancel`\n\t\tトーナメントを終了します。"}
                     }
                 else:
                     return {"add": {
-                            "re": r"^!add\s+.+#\d{4}",
-                            "expl": "`!add <name>#<4桁の数字>`\n\t\t指定されたユーザーを本トーナメントに追加します。"},
+                            "re": r"^!add[\s+\S(?:(?!#\d{4}).)*?#\d{4}]+",
+                            "expl": "`!add <name>#<4桁の数字>`\n\t\t指定されたユーザー達を本トーナメントに追加します。"},
                         "kick": {
-                            "re": r"^!kick\s+.+#\d{4}",
-                            "expl": "`!kick <name>#<4桁の数字>`\n\t\t指定されたユーザーを本トーナメントから除名します。"},
+                            "re": r"^!kick[\s+\S(?:(?!#\d{4}).)*?#\d{4}]+",
+                            "expl": "`!kick <name>#<4桁の数字>`\n\t\t指定されたユーザー達を本トーナメントから除名します。"},
                         "win": {
-                            "re": r"^!win\s+.+#\d{4}",
-                            "expl": f"`!win <name>#<4桁の数字>`\n\t\tスタンプが押せないユーザーを{order}の勝者に加えます。"},
+                            "re": r"^!win[\s+\S(?:(?!#\d{4}).)*?#\d{4}]+",
+                            "expl": f"`!win <name>#<4桁の数字>`\n\t\tスタンプが押せないユーザー達を{order}の勝者に加えます。"},
+                        "role":{
+                            "re":r"!role$",
+                            "expl":"`!role`\n\t\t役職の変更をトーナメントに反映します。"
+                        },
                         "regroup": {
                             "re": r"^!regroup$",
                             "expl": "`!regroup`\n\t\t再度グループ分けを行います。"}
@@ -603,8 +615,7 @@ class Basic(commands.Cog):
                 content = "□■━━━━━━━━━━━━■□\n"+\
                     f"{order}の勝者は、\n**このメッセージにスタンプを押してください。**" +\
                     "□■━━━━━━━━━━━━■□\n"+\
-                    "\n"+"\n".join([s["expl"] for s in commands_dict2.values()])+"\n\n" +\
-                    f"参加者から`{order}#{tour_id}`の役職を取り除くことや、serverからkickすることも有効です。"
+                    "\n"+"\n".join([s["expl"] for s in commands_dict2.values()])
                 chan_tmp = ctx.guild.get_channel(
                     tour_now["valid_ids"]["channel"])
                 if forEdit is False:
@@ -632,26 +643,22 @@ class Basic(commands.Cog):
                 input_content = msg_input2.content
                 commands_re = re.compile(
                     "("+"|".join([commands_dict2[key]["re"] for key in ["win", "add", "kick"]])+")")
+
                 if re.findall(commands_re, input_content):
-                    command = re.sub(r"^!", "", input_content.split()[0])
-                    if len(input_content.split()) < 2:
-                        err_content = f"引数にエラーがあります。"
-                        await ctx.channel.send(err_content)
-                        continue
-                    args_combined = " ".join(input_content.split()[1:])
-                    argsIn = args_combined.split("#") if "#" in args_combined else [
-                        args_combined, ""]
-                    args_name = {
-                        "name": argsIn[0],
-                        "discri": argsIn[1] if re.findall(r"^\d{4}$", argsIn[1]) != [] else ""
-                    }
+                    input_content2="".join(input_content.splitlines())
+                    command = re.sub(r"^!", "", input_content2.split()[0])
+                    args_input=re.sub(r"^!(kick|add|win)\s+","", input_content2)
+                    args_tmp=re.findall(r"\S(?:(?!#\d{4}).)*?#\d{4}", args_input)
+                    args_name=[{"name":s[:-5], "discri":s[-4:]} for s in args_tmp]
 
                     async def obtainMemCands(ctx, command: str, tour_now, process_now, args_name):
                         if command in ["kick", "win"]:
                             return [mem for mem in tour_now["members"][process_now]["all"]
-                                    if args_name["discri"] == mem.discriminator and args_name["name"] == mem.name]
+                                    if {"name":mem.name, "discri":mem.discriminator} in args_name]
                         elif command == "add":
-                            mem_cands_tmp = [user for user in await ctx.guild.query_members(args_name["name"]) if user.discriminator == args_name["discri"]]
+                            mem_cands_tmp = [user for arg in args_name 
+                                for user in await ctx.guild.query_members(arg["name"]) 
+                                if user.discriminator == arg["discri"] ]
                             await addNewMembers(ctx, mem_cands_tmp)
                             return [ctx.members[user.id] for user in mem_cands_tmp]
                         else:
@@ -664,8 +671,9 @@ class Basic(commands.Cog):
                     elif command == "kick":
                         tour_now["members"][process_now]["kick"] = list(set(tour_now["members"][process_now].get("kick", [])) | set(mem_cands))
                         await reloadPresent(ctx, tour_now, check_role=False)
-                        kick_content = ", ".join(
-                            [f"{mem.name}#{mem.discriminator}" for mem in mem_cands])+f"をトーナメント{tour_id}から除名しました。"
+                        kick_content = f"次の{len(mem_cands)}名をトーナメント{tour_id}から除名しました。\n"+\
+                            "\t\t"+"\n\t\t".join(
+                            [f"{mem.name}#{mem.discriminator}" for mem in mem_cands])
                         await ctx.channel.send(kick_content)
                         for member in mem_cands:
                             role_sf = discord.Object(
@@ -675,9 +683,10 @@ class Basic(commands.Cog):
                         tour_now["members"][process_now]["all"] = list(
                             set(tour_now["members"][process_now].get("all", [])) | set(mem_cands))
                         await reloadPresent(ctx, tour_now)
-                        add_content = ", ".join(
-                            [f"{mem.name}#{mem.discriminator}" for mem in mem_cands])+f"をトーナメント{tour_id}に追加しました。"
-                        await ctx.channel.send(add_content, check_role=False)
+                        add_content = f"次の{len(mem_cands)}名をトーナメント{tour_id}に追加しました。\n"+\
+                            "\t\t"+"\n\t\t".join(
+                            [f"{mem.name}#{mem.discriminator}" for mem in mem_cands])
+                        await ctx.channel.send(add_content)
                         for member in mem_cands:
                             role_sf = discord.Object(
                                 tour_now["roles"][process_now].id)
@@ -688,8 +697,9 @@ class Basic(commands.Cog):
                         tour_now["members"][process_now]["win_add"] = list(
                             set(tour_now["members"][process_now].get("win_add", [])) | set(mem_cands))
                         await reloadPresent(ctx, tour_now, check_role=False)
-                        add_content = ", ".join(
-                            [f"{mem.name}#{mem.discriminator}" for mem in mem_cands])+f"を{order}の勝者に追加しました。"
+                        add_content = f"次の{len(mem_cands)}名を{order}の勝者に追加しました。\n"+\
+                            "\t\t"+"\n\t\t".join(
+                            [f"{mem.name}#{mem.discriminator}" for mem in mem_cands])
                         await ctx.channel.send(add_content)
                     continue
                 # ### cancel
@@ -715,7 +725,8 @@ class Basic(commands.Cog):
                     await msg_tmp.clear_reactions()
 
                     await recieveReport(ctx, tour_now, process_now, forEdit=True)
-                    content = "再グループ分けを行いました。\n<#{}>を確認してください。".format(tour_now["channel_ids"]["results"])
+                    content = "再グループ分けを行いました。\n<#{}>を確認してください。\n".format(tour_now["channel_ids"]["results"])+\
+                        "役職の更新は少し遅れる場合があります。"
                     await ctx.channel.send(content)
                     #with warnings.catch_warnings():
                         #warnings.simplefilter("ignore", RuntimeWarning)
@@ -728,7 +739,8 @@ class Basic(commands.Cog):
                     continue
                 elif re.findall(commands_dict2["expl"]["re"], input_content)!=[]:
                     commands_dict2_add=obtainCommandsDict2(ctx, tour_now, process_now, True)
-                    content="\n".join([s["expl"] for s in commands_dict2_add.values()])
+                    content="\n".join([s["expl"] for s in commands_dict2_add.values()])+"\n\n"+\
+                        f"参加者から`{order}#{tour_id}`の役職を取り除くことや、serverからkickすることも有効です。"
                     await ctx.channel.send(content)
                     continue
                 # ### next
@@ -761,7 +773,7 @@ class Basic(commands.Cog):
                 order = judgeOrder(process_now, len(
                     tour_now["members"][process_now]["all"]), tour_now["number"])
                 win_content = "\n"+"□■━━━━━━━━━━━━■□\n"+\
-                    f"\t\t\t**{order} 勝者一覧**\n"+\
+                    f"\t\t\t\t\t**{order} 勝者一覧**\n"+\
                     "□■━━━━━━━━━━━━■□\n\n"+\
                     "\n".join([f"**`グループ{k+1}`**\n\t\t"+"\n\t\t".join([
                         f"{s.name}#{s.discriminator}" for s in v])
@@ -770,10 +782,6 @@ class Basic(commands.Cog):
             await showWinners(tour_now, process_now)
 
         victor = tour_now["victor"]
-        tour_now["roles"]["victor"] = await ctx.guild.create_role(**obtainRoleArgs("victor", tour_now))
-        await add_role(ctx, victor, tour_now["roles"]["victor"].id)
-        role_sf = discord.Object(tour_now["roles"][process_now-1].id)
-        await victor.remove_roles(role_sf)
 
         vict_content = f"トーナメント{tour_id}が終了しました。\n" +\
             f"**優勝は{victor.name}#{victor.discriminator}さんです**。\n\n" +\
@@ -842,9 +850,43 @@ class Delete(commands.Cog):
     @commands.command(description="", pass_context=True)
     async def tmp8(self, ctx: commands.Context):
         for ordTmp in range(1):
-            role = await ctx.guild.create_role(name=f"tmp-{ordTmp}", hoist=False)
+            role = await ctx.guild.create_role(name=f"tmp-{time.time()}", hoist=False, color=discord.Color.from_hsv(226/360, 47/100, 85/100))
             obj = discord.Object(role.id)
             await ctx.guild.me.add_roles(obj)
+        print(ctx.guild.me.top_role.position)
+
+    @commands.command(description="", pass_context=True)
+    async def tmp9(self, ctx: commands.Context):
+        print(ctx.guild.me.top_role.position)
+        mem = await ctx.guild.fetch_member(756695501822361680)
+        roles_tmp=[role for role in mem.roles if role.position > 0]
+        if len(roles_tmp)>0:
+            role_tmp=roles_tmp[0]
+            print(role_tmp.name, ctx.guild.me.top_role.position)
+            await role_tmp.edit(position=ctx.guild.me.top_role.position)
+
+    @commands.command(description="", pass_context=True)
+    async def tmp11(self, ctx: commands.Context, arg=1):
+        print({"arg":arg})
+        print({"top":ctx.guild.me.top_role.position})
+        mem = await ctx.guild.fetch_member(756695501822361680)
+        roles_tmp=[role for role in mem.roles if role.position > 0]
+        if len(roles_tmp)>0:
+            role_tmp=roles_tmp[0]
+            print({role_tmp.name:role_tmp.position})
+            returnVal=await ctx.guild.edit_role_positions({role_tmp:arg})
+            print({f"{role.name}-{role.id}": role.position for role in returnVal})
+
+    @commands.command(description="", pass_context=True)
+    async def tmp12(self, ctx: commands.Context, arg=1):
+        print({"arg":arg})
+        print({"top":ctx.guild.me.top_role.position})
+        print({f"{role.name}-{role.id}":role.position for role in ctx.guild.roles})
+
+
+
+    @commands.command(description="", pass_context=True)
+    async def tmp10(self, ctx: commands.Context):
         print(ctx.guild.me.top_role.position)
 
     @commands.command(description="", pass_context=True)
@@ -852,7 +894,41 @@ class Delete(commands.Cog):
         self.bot.reload_extension("Tournament")
         print("loaded")
 
+    @commands.command(description="", pass_context=True)
+    async def tmp7(self, ctx: commands.Context, *args):
+        if "remove" in args:
+            for role in [s for s in ctx.guild.roles if "tmp" in s.name]:
+                print(role.position)
+                await role.delete()
+            return
 
+        # print(ctx.guild.channels)
+        for role in [s for s in ctx.guild.roles if "tmp" in s.name]:
+            print(role.position)
+            await role.delete()
+        #args=[float(s) for s in argsIn]
+        # color=discord.Color.from_hsv(*args)
+        color = discord.Color.default()
+        mem = await ctx.guild.fetch_member(756695501822361680)
+
+        for ordTmp in range(1):
+            role = await ctx.guild.create_role(name=f"tmp-{ordTmp}", hoist=False, color=color)
+            obj = discord.Object(role.id)
+            await ctx.guild.me.add_roles(obj)
+        print(ctx.guild.me.top_role.position)
+        #mem=[s for s in ctx.guild.members if s.name.endswith("Camera")][0]
+        # print(mem.name)
+
+        for role_tmp in mem.roles:
+            if re.findall(r"#\w{5}$", role_tmp.name) != [] and role_tmp.position >= 1:
+                print(role_tmp.name, role_tmp.position)
+                await role_tmp.edit(color=discord.Color.blue())
+            else:
+                continue
+        # await role.edit(position=1)
+        new_mem = await ctx.guild.fetch_member(mem.id)
+        print([[s.name, s.position] for s in new_mem.roles])
+        print([[s.name, s.position] for s in ctx.guild.me.roles])
 
 
 def setup(bot):
