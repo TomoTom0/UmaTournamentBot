@@ -10,10 +10,12 @@ TOKEN = basic.DISCORD_TOKENS["beta"]  # beta
 startup_extensions = ["Tournament"]  # cogの導入
 
 description = ("`?open <1試合の人数> <最大参加人数>`でトーナメントを開催することができます。")
-#intents = discord.Intents(members=True)
-bot = commands.Bot(command_prefix='?', description=description) #, intents=intents, chunk_guilds_at_startup=False
+
+bot = commands.Bot(command_prefix='?', description=description)
 commands.Context.tours = {}
-commands.Context.onlyAdmin = True
+
+commands.Context.onlyAdmin = (os.environ.get("bot_onlyAdmin", "true").lower() == "true")
+commands.Context.gatherHere = (os.environ.get("bot_gatherHere", "true").lower() == "true")
 commands.Context.members = {}
 
 
@@ -25,9 +27,8 @@ commands.Context.members = {}
 async def on_ready():
     print(f"Logged in as\n{bot.user.name}\n{bot.user.id}\n------")
 
+
 ## メッセージ受信時に動作する処理
-
-
 @bot.event
 async def on_message(message):
     # メッセージ送信者がこのBotだった場合は無視する
