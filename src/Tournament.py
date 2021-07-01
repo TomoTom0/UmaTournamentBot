@@ -375,11 +375,6 @@ class Basic(commands.Cog):
         sendContent = "管理者のみがbotを操作できます。" if ctx.onlyAdmin is True else "すべてのユーザーがbotを操作できます。"
         await ctx.channel.send(sendContent)
 
-    @commands.command(description="", pass_context=True)
-    async def l(self, ctx: commands.Context):
-        self.bot.reload_extension("Tournament")
-        print("loaded")
-
     @commands.command(description="`num`: 1試合の人数, `maxNum`: 最大参加人数", pass_context=True)
     async def open(self, ctx: commands.Context, num=3, maxNum=81):
         "トーナメントを開催します。"
@@ -621,6 +616,12 @@ class Basic(commands.Cog):
             if len(members_now["all"]) == 1:
                 tour_now["victor"] = members_now["all"][0]
                 break  # finish
+            elif len(members_now["all"]) == 0: # finish because of something wrong
+                content="何らかの不具合により、トーナメントが進行できなくなりました。\n"+\
+                    f"`?delete {tour_id}`\n\t\tこのトーナメントに関するチャンネル・役職を削除します。"
+                await send2chan(ctx, content, tour_now["lead_ids"]["channel"])
+                tour_now["victor"] = ctx.guild.me
+                return
 
             members_now["group"] = divideIntoGroup(
                 members_now["all"], number, maxNumber)
@@ -976,15 +977,7 @@ class Delete(commands.Cog):
             await role.delete()
         ctx.tours = {}
 
-    @commands.command(description="", pass_context=True)
-    async def tmp8(self, ctx: commands.Context):
-        content = "□■━━━━━━━━━━━━■□\n" +\
-            "\t\t\t\t\t**決勝戦勝利報告**\n" +\
-            "\t\t\t━━━━━━━━━━\n" +\
-            "決勝戦勝者は\n**このメッセージに\nリアクションを追加してください。**\n" +\
-            "□■━━━━━━━━━━━━■□\n"
-        await ctx.send(content)
-        print(ctx.guild.me.top_role.position)
+
 
 
 def setup(bot):
