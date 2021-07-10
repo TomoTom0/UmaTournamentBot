@@ -1,6 +1,1 @@
-discord.py[voice]>=1.6.1
-requests
-msgpack-python
-future
-setuptools
-pillow
+discord.py>=1.7.1

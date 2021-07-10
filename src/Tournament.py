@@ -295,7 +295,7 @@ async def reloadPresent(ctx: commands.Context, tour_now: dict, check_role=False,
             return cand_content+"\n"+add_content+"\n"+join_content
         # ## process > 0
         elif process_now > 0:
-            if check_role is True and ctx.roleIsValid is True:
+            if check_role is True and tour_now["roleIsValid"] is True:
                 await checkRoleMembers(ctx, tour_now, tour_now["roles"][process_now])
             members_all = tour_now["members"][process_now]["all"]
             members_kick = tour_now["members"][process_now]["kick"]
@@ -389,7 +389,7 @@ class Basic(commands.Cog):
     async def roleIsValid(self, ctx: commands.Context):
         "トーナメント演出に役職を含めるかどうかを切り替えます。"
         ctx.roleIsValid = not ctx.roleIsValid
-        sendContent = "役職もトーナメント演出に含まれます。" if ctx.onlyAdmin is True else "役職もトーナメント演出に含まれません"
+        sendContent = "役職もトーナメント演出に含まれます。" if ctx.onlyAdmin is True else "役職はトーナメント演出に含まれません。"
         await ctx.channel.send(sendContent)
 
 
@@ -440,6 +440,7 @@ class Basic(commands.Cog):
                     "process": 0,
                     "forAll": False,
                     "roles": {},
+                    "roleIsValid":ctx.roleIsValid,
                     "valid_ids": {},
                     "pin_msg": [],
                     "lead_ids": {},
@@ -529,7 +530,7 @@ class Basic(commands.Cog):
             return isValidAuthor and isValidContent
 
         # ## initial_roles
-        if ctx.roleIsValid is True:
+        if tour_now["roleIsValid"] is True:
             for num_tmp in range(2):
                 role_tmp = await ctx.guild.create_role(name=f"トーナメントBot{num_tmp}#{tour_id}", hoist=False)
                 tour_now["roles"][f"bot-{num_tmp}"] = role_tmp
@@ -628,7 +629,7 @@ class Basic(commands.Cog):
                         print(error_content)
                     await tour_now["roles"][process_now - 1].edit(color=discord.Color.from_hsv(226/360, 47/100, 85/100))
 
-            if ctx.roleIsValid is True:
+            if tour_now["roleIsValid"] is True:
                 await renewRole(ctx, tour_now, process_now)  # await
 
             if len(members_now["all"]) == 1:
@@ -822,7 +823,7 @@ class Basic(commands.Cog):
                             "\t\t"+"\n\t\t".join(
                                 [f"{mem.name}#{mem.discriminator}" for mem in mem_cands])
                         await send2chan(ctx, kick_content, tour_now["lead_ids"]["channel"])
-                        if ctx.roleIsValid is True:
+                        if tour_now["roleIsValid"] is True:
                             for member in mem_cands:
                                 role_sf = discord.Object(
                                     tour_now["roles"][process_now].id)
@@ -835,7 +836,7 @@ class Basic(commands.Cog):
                             "\t\t"+"\n\t\t".join(
                                 [f"{mem.name}#{mem.discriminator}" for mem in mem_cands])
                         await send2chan(ctx, add_content, tour_now["lead_ids"]["channel"])
-                        if ctx.roleIsValid is True:
+                        if tour_now["roleIsValid"] is True:
                             for member in mem_cands:
                                 role_sf = discord.Object(
                                     tour_now["roles"][process_now].id)
@@ -862,7 +863,7 @@ class Basic(commands.Cog):
                     tour_now["members"][process_now]["win_add"] = []
                     content="`regroup`\n\t再グループ分けを行います。\n\t少し時間がかかります。"
                     await send2chan(ctx, content, tour_now["lead_ids"]["channel"])
-                    if ctx.roleIsValid is True:
+                    if tour_now["roleIsValid"] is True:
                         await checkRoleMembers(ctx, tour_now, tour_now["roles"][process_now])
                     members_all = list(
                         set(tour_now["members"][process_now]["all"])
@@ -880,13 +881,13 @@ class Basic(commands.Cog):
 
                     await recieveReport(ctx, tour_now, process_now, forEdit=True)
                     content = "<#{}>を確認してください。\n".format(tour_now["channel_ids"]["announce"]) +\
-                        ("役職の更新は遅れる場合があります。" if ctx.roleIsValid is True else "")
+                        ("役職の更新は遅れる場合があります。" if tour_now["roleIsValid"] is True else "")
                     await send2chan(ctx, content, tour_now["lead_ids"]["channel"])
-                    if ctx.roleIsValid is True:
+                    if tour_now["roleIsValid"] is True:
                         await renewRole(ctx, tour_now, process_now)
                     continue
                 elif re.findall(commands_dict2["role"]["re"], input_content) != []:
-                    if ctx.roleIsValid is False:
+                    if tour_now["roleIsValid"] is False:
                         continue
                     await reloadPresent(ctx, tour_now, check_role=True, atFirst=False)
                     content = "`role`\n\t役職の変更を反映しました。"
@@ -944,8 +945,12 @@ class Basic(commands.Cog):
 
         victor = tour_now["victor"]
 
-        vict_content = f"\tトーナメント{tour_id}が終了しました。\n" +\
-            f"**優勝は{victor.name}#{victor.discriminator}さんです**。\n\n" +\
+        vict_content = "□■━━━━━━━━━━━━■□\n" +\
+        "\t\t\t\t**トーナメント終了**\n" +\
+        "\t\t\t━━━━━━━━━━\n" +\
+            f"トーナメント{tour_id}が終了しました。\n" +\
+            f"**優勝は{victor.name}#{victor.discriminator}さんです**。\n" +\
+        "□■━━━━━━━━━━━━■□\n\n"+\
             f"`?delete {tour_id}`\n\t\tこのトーナメントに関するチャンネル・役職を削除します。\n" +\
             "`?deleteRes`\n\t\t終了しているトーナメントに関するチャンネル・役職をすべて削除します。"
         await send2chan(ctx, vict_content, tour_now["lead_ids"]["channel"])
