@@ -5,15 +5,15 @@
 このBotはdiscord上での大規模トーナメントをサポートします。
 **抽選・グループ分け・集計・チャンネル作成を自動で行う**ので、トーナメント開催が非常にスムーズになります。
 
-This discord bot supports your hosting tournaments of Uma Musume.
+This discord bot supports your hosting tournaments of Uma Musume Pretty Derby.
 
-Botの操作主に求められる行動は、コマンドの入力、参加者への簡単な説明です。
-
-**TOC**
 - [Botをサーバーに追加する](https://github.com/TomoTom0/UmaTournamentBot#Botをサーバーに追加する)
 - [トーナメントの開催](https://github.com/TomoTom0/UmaTournamentBot#トーナメントの開催)
 - [その他のコマンド](https://github.com/TomoTom0/UmaTournamentBot#その他のコマンド)
 - [注意点](https://github.com/TomoTom0/UmaTournamentBot#注意点)
+
+<img src="intro/uma_intro.png" style="width: 60vw" alt="紹介">
+
 
 ## Botをサーバーに追加する
 
@@ -103,7 +103,7 @@ announceチャンネルに新しいグループ分けが発表されます。
 <img src="https://i.imgur.com/2nJUCou.png" alt="2回戦グループ分け">
 -->
 
-#### 勝利報告: 不適切な人がいた場合
+#### Caution! 勝利報告: 不適切な人がいた場合
 
 いつまでも勝利報告をしないグループがあった場合、`!nextForce`により、未報告グループを無視して、次に進むことができます。
 あるいは、`!win <@name>/<name>#<4桁の数字>`で勝者に追加できます。(リアクションの追加にすら手間取る人は無視して進んだ方がいいかもしれませんが。)
@@ -155,12 +155,13 @@ botの操作をサーバーの管理者権限に限定するかどうかを切�
 
 ### 長期間トーナメントには不向き
 botがherokuで運用されている場合、24時間に1度botが再起動されるため、その時点で大会の情報は失われます。
-長期間トーナメントには不向きです。(*なお、今後この問題は解消する予定です。*)
+ゆえに、長期間トーナメントには不向きです。(*なお、今後この問題は解消する予定です。*)
 
 ### 自分で運用する
 
-本格的に運用する場合、herokuやGCPで自分でbotを利用することをお勧めします。(こちらのREADMEが参考になります。: [TomoTom0/DiscordBot_Heroku_Stat.ink](https://github.com/TomoTom0/DiscordBot_Heroku_Stat.ink))
+本格的に運用する場合、herokuやGCPで自分でbotを利用することをお勧めします。(参考: [TomoTom0/DiscordBot_Heroku_Stat.ink](https://github.com/TomoTom0/DiscordBot_Heroku_Stat.ink))
+
 なお、環境変数として`DISCORD_BOT_TOKEN`を登録する必要があります。
 
-⇩のボタンを押せば、herokuでこのbotの運用をが始まります。
+⇩のボタンを押せば、herokuでこのbotの運用が始まります。
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
