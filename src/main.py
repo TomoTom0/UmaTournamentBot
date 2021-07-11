@@ -13,7 +13,6 @@ description = ("`?open <1試合の人数> <最大参加人数>`でトーナメ�
 
 bot = commands.Bot(command_prefix='?', description=description)
 commands.Context.tours = {}
-
 commands.Context.onlyAdmin = (os.environ.get("bot_onlyAdmin", "true").lower() == "true")
 commands.Context.gatherHere = (os.environ.get("bot_gatherHere", "true").lower() == "true")
 commands.Context.roleIsValid = (os.environ.get("bot_roleIsValid", "false").lower() == "true")

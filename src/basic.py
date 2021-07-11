@@ -9,6 +9,6 @@ IsHeroku = bool(os.getenv("DYNO", False))
 
 DISCORD_TOKENS = {
     "alpha": 0,
-    "beta": os.environ["discord_token_uma_alpha"]}  # べーたのtoken
+    "beta": os.environ.get("discord_token_uma", os.environ.get["DISCORD_BOT_TOKEN"])}  # べーたのtoken
 
 

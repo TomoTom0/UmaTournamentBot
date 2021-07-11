@@ -363,20 +363,7 @@ class Basic(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-    @commands.command(description="", pass_context=True)
-    async def tmp10(self, ctx: commands.Context):
-        def check_msg(msg):
-            isValidAuthor = msg.author.id == ctx.author.id
-            isValidContent = re.findall(r"^!", msg.content) != []
-            return isValidAuthor and isValidContent
-        print(11)
-        msg_input = await ctx.bot.wait_for("message", check=check_msg, timeout=None)
-        print(msg_input.content)
 
-    @commands.command(description="", pass_context=True)
-    async def l(self, ctx: commands.Context):
-        self.bot.reload_extension("Tournament")
-        print("loaded")
     # # only admin
     @commands.command(description="", pass_context=True)
     async def onlyAdmin(self, ctx: commands.Context):
@@ -384,6 +371,21 @@ class Basic(commands.Cog):
         ctx.onlyAdmin = not ctx.onlyAdmin
         sendContent = "管理者のみがbotを操作できます。" if ctx.onlyAdmin is True else "すべてのユーザーがbotを操作できます。"
         await ctx.channel.send(sendContent)
+
+    @commands.command(description="`?onlyAdmin`より優先されます。", pass_context=True)
+    async def allow(self, ctx: commands.Context, atUserNames:str):
+        "`@UserName`で指定された人がbotを操作できるようになります。\nスペース区切りで複数人同時に入力できます。"
+        ctx.onlyAdmin = not ctx.onlyAdmin
+        sendContent = "管理者のみがbotを操作できます。" if ctx.onlyAdmin is True else "すべてのユーザーがbotを操作できます。"
+        await ctx.channel.send(sendContent)
+
+    @commands.command(description="`?onlyAdmin`より優先されます。", pass_context=True)
+    async def disallow(self, ctx: commands.Context, atUserName:str):
+        "`@UserName`で指定された人がbotを操作できないようになります。\nスペース区切りで複数人同時に入力できます。"
+        ctx.onlyAdmin = not ctx.onlyAdmin
+        sendContent = "管理者のみがbotを操作できます。" if ctx.onlyAdmin is True else "すべてのユーザーがbotを操作できます。"
+        await ctx.channel.send(sendContent)
+
 
     @commands.command(description="", pass_context=True)
     async def roleIsValid(self, ctx: commands.Context):
@@ -445,6 +447,7 @@ class Basic(commands.Cog):
                     "pin_msg": [],
                     "lead_ids": {},
                     "host_ids": [ctx.author.id],
+                    "server_id":ctx.server.id,
                     "channel_ids": {},
                     "category_ids": {},
                     "message_ids": {}}
@@ -496,7 +499,8 @@ class Basic(commands.Cog):
         content_dict = {
             "lead": lead_content_dict[ctx.gatherHere],
             "open": f"\t\t`1試合の人数`    {number}人\n" +
-            f"\t\t`最大参加人数`  {maxNumber}人\n",
+            f"\t\t`最大参加人数`  {maxNumber}人\n"+\
+            "現在の参加者希望者一覧は<#{}>を確認してください。\n".format(tour_now["channel_ids"]["announce"]),
             "commands": "\n".join([commands_dict[k]["expl"] for k in ["next", "cancel"]])+"\n\n" +
             "その他のコマンドは<#{}>を確認してください。".format(
                     tour_now["channel_ids"]["commands"])
@@ -720,7 +724,8 @@ class Basic(commands.Cog):
                     "\t\t\t━━━━━━━━━━\n" +
                     f"{order}の勝者は\n" +
                     "**このメッセージに\nリアクションを追加してください。**\n" +
-                    "□■━━━━━━━━━━━━■□\n",
+                    "□■━━━━━━━━━━━━■□\n"+\
+                    "{}のグループ分け・現在の勝者一覧は<#{}>を確認してください。\n".format(order, tour_now["channel_ids"]["announce"]),
                     False: "□■━━━━━━━━━━━━■□\n" +
                     f"{order}の勝者は\n" +
                     "**<#{}>の該当メッセージに**\n".format(tour_now["channel_ids"]["announce"]) +
