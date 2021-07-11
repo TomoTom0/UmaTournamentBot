@@ -1,15 +1,19 @@
 # UmaTournamentBot
-Discord bot for hosting tournaments in Uma Musume
 
 ## Introduction
 
 このBotはdiscord上での大規模トーナメントをサポートします。
 **抽選・グループ分け・集計・チャンネル作成を自動で行う**ので、トーナメント開催が非常にスムーズになります。
 
-Botの操作主に求められる行動は、コマンドの入力、参加者への説明(、必要ならば催促や除名)です。
+This discord bot supports your hosting tournaments of Uma Musume.
 
+Botの操作主に求められる行動は、コマンドの入力、参加者への簡単な説明です。
 
-## Usage
+**TOC**
+- [Botをサーバーに追加する](https://github.com/TomoTom0/UmaTournamentBot#Botをサーバーに追加する)
+- [トーナメントの開催](https://github.com/TomoTom0/UmaTournamentBot#トーナメントの開催)
+- [その他のコマンド](https://github.com/TomoTom0/UmaTournamentBot#その他のコマンド)
+- [注意点](https://github.com/TomoTom0/UmaTournamentBot#注意点)
 
 ## Botをサーバーに追加する
 
